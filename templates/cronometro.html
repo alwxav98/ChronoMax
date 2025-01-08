@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CronoMax</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1c1c1c;
+            color: #ffa500;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1200px;
+            padding: 10px 20px;
+            background-color: #2e2e2e;
+            box-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .logout-button {
+            background-color: #ffa500;
+            color: #1c1c1c;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .logout-button:hover {
+            background-color: #ff8c00;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        label {
+            font-size: 1rem;
+            text-align: left;
+            color: #ffa500;
+        }
+
+        .activity {
+            padding: 10px;
+            border: 1px solid #ffa500;
+            border-radius: 5px;
+            background-color: #1c1c1c;
+            color: #ffa500;
+        }
+
+        .activity:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+        }
+
+        form {
+            background-color: #2e2e2e;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .clock-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .clock-section {
+            background-color: #ffa500;
+            color: #1c1c1c;
+            border-radius: 50%;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10rem;
+            margin: 0 10px;
+            box-shadow: 0 0 35px rgba(255, 165, 0, 0.5);
+        }
+
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .button {
+            background-color: #ffa500;
+            color: #1c1c1c;
+            border: none;
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0 10px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
+        }
+
+        .button:hover {
+            background-color: #ff8c00;
+        }
+
+        .date-input {
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 1rem;
+        }
+
+        .download-button-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .download-button {
+            background-color: #ffa500;
+            color: #1c1c1c;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .download-button:hover {
+            background-color: #ff8c00;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #ffa500;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ChronoMax</h1>
+        <button class="logout-button" onclick="logout()">Cerrar Sesión</button>
+    </header>
+    <main>
+        <br>
+        <br>
+        <label>Ingrese el nombre de la actividad a realizar:</label>
+        <br>
+        <input class="activity" type="text" name="activity_name" placeholder="Nombre de la actividad" required>
+        <br>
+        <br>
+        <div class="clock-container">
+            <div class="clock-section" id="hours">00</div>
+            <div class="clock-section" id="minutes">00</div>
+            <div class="clock-section" id="seconds">00</div>
+        </div>
+        <div class="buttons-container">
+            <button class="button" onclick="pauseTimer()">PAUSE</button>
+            <button class="button" onclick="startTimer()">START</button>
+            <button class="button" onclick="resetTimer()">RESET</button>
+        </div>
+        <br>
+        <div class="download-button-container">
+            <br>
+            <br>
+            <br>
+            <br>
+            <form onsubmit="generateReport(event)">
+                <input type="date" id="reportDate" class="date-input" placeholder="Seleccionar fecha" required>
+                <button class="download-button" type="submit">Generar Reporte</button>
+            </form>
+        </div>
+    </main>
+    <script>
+        let hours = 0, minutes = 0, seconds = 0;
+        let intervalId = null;
+
+        function updateClock() {
+            document.getElementById("hours").textContent = String(hours).padStart(2, "0");
+            document.getElementById("minutes").textContent = String(minutes).padStart(2, "0");
+            document.getElementById("seconds").textContent = String(seconds).padStart(2, "0");
+        }
+
+        function setStatus(message) {
+            document.getElementById("status").textContent = `Estado: ${message}`;
+        }
+
+        function startTimer() {
+            const activityName = document.querySelector('input[name="activity_name"]').value.trim();
+            if (!activityName) {
+                alert("Por favor, introduce un nombre para la actividad.");
+                return;
+            }
+
+            if (!intervalId) {
+                intervalId = setInterval(() => {
+                    seconds++;
+                    if (seconds === 60) {
+                        seconds = 0;
+                        minutes++;
+                    }
+                    if (minutes === 60) {
+                        minutes = 0;
+                        hours++;
+                    }
+                    updateClock();
+                }, 1000);
+                setStatus("Cronómetro en ejecución");
+            }
+        }
+
+        function pauseTimer() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+
+                const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                const activityName = document.querySelector('input[name="activity_name"]').value.trim();
+
+                fetch('/save_time', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ activityName, timeElapsed: totalSeconds })
+                }).then(response => {
+                    if (response.ok) {
+                        alert("Tiempo guardado correctamente");
+                    } else {
+                        alert("Error al guardar el tiempo");
+                    }
+                });
+
+                setStatus("Cronómetro pausado");
+            }
+        }
+
+        function resetTimer() {
+            if (intervalId) clearInterval(intervalId);
+            intervalId = null;
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
+            document.querySelector('input[name="activity_name"]').value = '';
+            updateClock();
+            setStatus("Cronómetro reiniciado");
+        }
+
+        // Función para generar el reporte
+        function generateReport(event) {
+            event.preventDefault();  // Evitar el envío del formulario
+
+            const reportDate = document.getElementById("reportDate").value;
+            if (!reportDate) {
+                alert("Por favor, selecciona una fecha para generar el reporte.");
+                return;
+            }
+
+            // Llamada al servidor para generar el reporte en PDF
+            window.location.href = `/generate_report?date=${reportDate}`;
+        }
+
+
+        function logout() {
+            fetch('/logout', { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        console.log("Sesión cerrada correctamente");
+                        window.location.href = 'index.html'; // Redirige al inicio
+                    } else {
+                        console.error("Error al cerrar sesión");
+                        alert("Hubo un problema al cerrar sesión. Inténtalo de nuevo.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error en la solicitud:", error);
+                    alert("Hubo un error al cerrar sesión.");
+                });
+        }
+
+        updateClock();
+    </script>
+</body>
+</html>
