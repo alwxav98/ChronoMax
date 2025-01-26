@@ -1,0 +1,37 @@
+version: '3.8'
+
+networks:
+  chronomaxnetwork:
+
+volumes:
+  sql-server-data:
+
+services:
+  Chronomax:
+    container_name: Chronomax
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "StrongPass1!"
+      ACCEPT_EULA: "Y"
+    networks:
+      - chronomaxnetwork
+    volumes:
+      - sql-server-data:/var/opt/mssql
+
+  chronomax_login:  # Este es el nombre correcto del servicio
+    container_name: proyectoChronomaxLogin
+    ports:
+      - "5000:5000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - Chronomax
+    networks:
+      - chronomaxnetwork
+    environment:
+      SECRET_KEY: "mysecretkey"
+
+      SQLALCHEMY_DATABASE_URI: "mssql+pyodbc://sa:StrongPass1!@Chronomax:1433/Chronomax?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"

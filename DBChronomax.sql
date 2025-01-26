@@ -1,13 +1,26 @@
+CREATE DATABASE PhotoSphere;
+GO
+USE PhotoSphere;
+GO
+CREATE TABLE Users (
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    Email NVARCHAR(255) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+select * from Users
+
 USE Chronomax;
 GO
 
 CREATE TABLE Activities (
-    ID INT IDENTITY(1,1) PRIMARY KEY, -- Clave primaria única para cada actividad
-    UserID INT NOT NULL,              -- Relación con la tabla Users
+    ID INT IDENTITY(1,1) PRIMARY KEY, -- Clave primaria ï¿½nica para cada actividad
+    UserID INT NOT NULL,              -- Relaciï¿½n con la tabla Users
     ActivityName NVARCHAR(255) NOT NULL, -- Nombre de la actividad
-    Duration INT NOT NULL,            -- Duración de la actividad en segundos
-    ActivityDate DATETIME DEFAULT GETDATE(), -- Fecha y hora en que se realizó la actividad
-    FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE -- Relación con Users y eliminación en cascada
+    Duration INT NOT NULL,            -- Duraciï¿½n de la actividad en segundos
+    ActivityDate DATETIME DEFAULT GETDATE(), -- Fecha y hora en que se realizï¿½ la actividad
+    FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE -- Relaciï¿½n con Users y eliminaciï¿½n en cascada
 );
 GO
 

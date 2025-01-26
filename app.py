@@ -13,6 +13,10 @@ from reportlab.lib.pagesizes import letter
 from sqlalchemy import cast, Date
 from datetime import datetime
 
+from flask import flash  # Para mostrar mensajes de error en el frontend
+import re  # Para validar el formato del correo electrónico
+from flask import jsonify
+
 app = Flask(__name__)
 app.config.from_object('config')
 db.init_app(app)
@@ -32,14 +36,33 @@ def register():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        password_hash = generate_password_hash(password)
 
-        # Crear un nuevo usuario
+        # Validar que el correo tenga un formato válido
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, email):
+            return jsonify({"success": False, "message": "Por favor, introduce un correo válido."}), 400
+
+        # Validar dominios específicos (opcional)
+        allowed_domains = ["gmail.com", "yahoo.com", "outlook.com"]
+        domain = email.split('@')[-1]
+        if domain not in allowed_domains:
+            return jsonify({"success": False, "message": "El dominio del correo no está permitido. Usa un correo válido."}), 400
+
+        # Validar que la contraseña tenga al menos 5 caracteres
+        if len(password) < 5:
+            return jsonify({"success": False, "message": "La contraseña debe tener al menos 5 caracteres."}), 400
+
+        # Verificar si el correo ya está registrado
+        if UserModel.query.filter_by(Email=email).first():
+            return jsonify({"success": False, "message": "El correo ya está registrado."}), 400
+
+        # Guardar al usuario
+        password_hash = generate_password_hash(password)
         new_user = UserModel(email=email, password_hash=password_hash)
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('home'))
+        return jsonify({"success": True, "message": "Registro exitoso. Ahora puedes iniciar sesión."}), 200
 
     return render_template('register.html')
 
@@ -47,23 +70,39 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+        try:
+            # Procesar datos enviados como JSON
+            data = request.get_json()
 
-        # Buscar usuario en la base de datos
-        user = UserModel.query.filter_by(Email=email).first()
+            if not data or 'email' not in data or 'password' not in data:
+                return jsonify({"success": False, "message": "Faltan campos obligatorios."}), 400
 
-        if user:
+            email = data['email']
+            password = data['password']
+
+            # Buscar usuario en la base de datos
+            user = UserModel.query.filter_by(Email=email).first()
+
+            if not user:
+                return jsonify({"success": False, "message": "El usuario no existe."}), 404
+
             # Verificar contraseña
-            if check_password_hash(user.PasswordHash, password):
-                session['user_id'] = user.ID  # Almacenar el user_id en la sesión
-                return redirect(url_for('cronometro_page'))  # Redirigir a la página del cronómetro
-            else:
-                return "Contraseña incorrecta.", 401
-        else:
-            return "Usuario no encontrado.", 404
+            if not check_password_hash(user.PasswordHash, password):
+                return jsonify({"success": False, "message": "Contraseña incorrecta."}), 401
 
+            # Si el login es exitoso
+            session['user_id'] = user.ID  # Almacenar el user_id en la sesión
+            return jsonify({"success": True, "message": "Inicio de sesión exitoso."}), 200
+        except Exception as e:
+            # Capturar cualquier error no manejado
+            print("Error en /login:", e)
+            return jsonify({"success": False, "message": "Ocurrió un error interno en el servidor."}), 500
+
+    # Renderizar el formulario de inicio de sesión si se accede por GET
     return render_template('login.html')
+
+
+
 
 @app.route('/cronometro', methods=['GET', 'POST'])
 def cronometro_page():
@@ -71,6 +110,9 @@ def cronometro_page():
         return redirect(url_for('login'))  # Redirigir a login si no hay sesión activa
 
     if request.method == 'POST':
+        print("Request data:", request.data)  # Para depurar el cuerpo de la solicitud
+        print("Request form:", request.form)  # Para depurar el formulario
+        print("Request headers:", request.headers)  # Ver los encabezados
         action = request.form.get('action')
         activity_name = request.form.get('activity_name')  # Obtener el nombre de la actividad
 
@@ -171,7 +213,7 @@ def generate_report():
 
     if not activities:
         print("No hay actividades para la fecha seleccionada")
-        return "No hay actividades para la fecha seleccionada", 404
+        return jsonify({"success": False, "message": "No hay actividades para la fecha seleccionada"}), 200
 
     # Crear el PDF en memoria
     buffer = BytesIO()
