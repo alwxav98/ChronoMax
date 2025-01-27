@@ -267,6 +267,7 @@
 
         function generateReport(event) {
             event.preventDefault();
+
             const reportDate = document.getElementById("reportDate").value;
             if (!reportDate) {
                 alert("Por favor, selecciona una fecha para generar el reporte.");
@@ -275,21 +276,34 @@
 
             // Realizar una solicitud GET a /generate_report con la fecha como parámetro
             fetch(`/generate_report?date=${reportDate}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.success) {
-                        // Mostrar mensaje en un cuadro de diálogo si no hay actividades
-                        alert(data.message);
-                    } else {
-                        // Si hay actividades, redirigir para descargar el archivo
-                        window.location.href = `/generate_report?date=${reportDate}`;
+                .then(response => {
+                    if (!response.ok) {
+                        // Si el servidor responde con un error, intenta extraer el mensaje JSON
+                        return response.json().then(data => {
+                            throw new Error(data.message || "No se pudo generar el reporte.");
+                        });
                     }
+
+                    // Si la respuesta es exitosa, asume que es un PDF y redirige para descargarlo
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Crear una URL para el archivo PDF y forzar la descarga
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `reporte_${reportDate}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
                 })
                 .catch(error => {
+                    // Mostrar el error en un cuadro de diálogo
                     console.error("Error al generar el reporte:", error);
-                    alert("Ocurrió un error al intentar generar el reporte.");
+                    alert(error.message);
                 });
         }
+
 
 
         function logout() {
