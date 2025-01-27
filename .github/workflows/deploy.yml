@@ -10,29 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Paso 1: Checkout del código fuente
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Paso 2: Configuración de SSH para conexión a la instancia EC2
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # Paso 3: Crear el directorio de destino en la instancia EC2 (si no existe)
       - name: Ensure target directory exists
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} << 'EOF'
             mkdir -p ${{ secrets.TARGET_DIR }}/ChronoMax
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
           EOF
 
-      # Paso 4: Copiar archivos del proyecto a la instancia EC2
       - name: Copy files to EC2
         run: |
           scp -o StrictHostKeyChecking=no -r . ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}/ChronoMax
 
-      # Paso 5: Desplegar en la instancia EC2 utilizando docker-compose
       - name: Deploy application on EC2
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} << 'EOF'
