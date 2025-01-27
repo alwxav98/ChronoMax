@@ -16,11 +16,15 @@ from datetime import datetime
 from flask import flash  # Para mostrar mensajes de error en el frontend
 import re  # Para validar el formato del correo electrónico
 from flask import jsonify
+from pytz import timezone
+
 
 app = Flask(__name__)
 app.config.from_object('config')
 db.init_app(app)
 api = Api(app)
+ecuador_tz = timezone('America/Guayaquil')
+
 
 # Crear un objeto Cronometro
 cronometro = Cronometro()
@@ -151,6 +155,9 @@ def cronometro_page():
     return render_template('cronometro.html', elapsed_time=cronometro.get_elapsed_time())
 
 # Guardar el tiempo transcurrido en la base de datos
+from datetime import datetime
+import pytz
+
 @app.route('/save_time', methods=['POST'])
 def save_time():
     if 'user_id' not in session:
@@ -163,16 +170,21 @@ def save_time():
     if not activity_name or time_elapsed is None:
         return jsonify({"error": "Datos incompletos"}), 400
 
+    # Obtener la fecha actual con la zona horaria de Ecuador
+    current_time = datetime.now(ecuador_tz)
+
     # Crear un nuevo registro en la tabla Activities
     cronometro_entry = CronometroModel(
         user_id=session['user_id'],
         activity_name=activity_name,
-        duration=time_elapsed  # Usar "duration" en lugar de "time_elapsed"
+        duration=time_elapsed,
+        activity_date=current_time  # Fecha ajustada a la zona horaria
     )
     db.session.add(cronometro_entry)
     db.session.commit()
 
     return jsonify({"message": "Tiempo guardado correctamente"}), 200
+
 
 
 @app.route('/generate_report', methods=['GET'])
