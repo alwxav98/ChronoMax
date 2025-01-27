@@ -1,6 +1,6 @@
-CREATE DATABASE PhotoSphere;
+CREATE DATABASE Chronomax;
 GO
-USE PhotoSphere;
+USE Chronomax;
 GO
 CREATE TABLE Users (
     ID INT IDENTITY(1,1) PRIMARY KEY,
