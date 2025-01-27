@@ -15,6 +15,7 @@ services:
     environment:
       SA_PASSWORD: "StrongPass1!"
       ACCEPT_EULA: "Y"
+      TZ: "America/Guayaquil"
     networks:
       - chronomaxnetwork
     volumes:
