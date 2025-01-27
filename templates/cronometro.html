@@ -203,9 +203,13 @@
         }
 
         function setMaxDateForCalendar() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById("reportDate").setAttribute("max", today);
+            // Obtener la fecha actual en la zona horaria de Ecuador
+            const ecuadorDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
+
+            // Establecer la fecha máxima en el calendario
+            document.getElementById("reportDate").setAttribute("max", ecuadorDate);
         }
+
 
         function startTimer() {
             const activityName = document.getElementById('activity').value.trim();
