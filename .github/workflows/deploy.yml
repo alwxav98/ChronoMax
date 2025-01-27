@@ -30,7 +30,8 @@ jobs:
       # Paso 4: Copiar archivos del proyecto a la instancia EC2
       - name: Copy files to EC2
         run: |
-          scp -o StrictHostKeyChecking=no -r . ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}/ChronoMax
+          rsync -avz --exclude '.git' -e "ssh -o StrictHostKeyChecking=no" . ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}/ChronoMax
+
 
       # Paso 5: Desplegar en la instancia EC2 utilizando docker-compose
       - name: Deploy application on EC2
