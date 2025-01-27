@@ -178,7 +178,7 @@ def save_time():
         user_id=session['user_id'],
         activity_name=activity_name,
         duration=time_elapsed,
-        activity_date=current_time  # Fecha ajustada a la zona horaria
+        #activity_date=current_time  # Fecha ajustada a la zona horaria
     )
     db.session.add(cronometro_entry)
     db.session.commit()
