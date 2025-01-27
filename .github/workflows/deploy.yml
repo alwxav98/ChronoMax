@@ -20,12 +20,19 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # Paso 3: Copiar archivos del proyecto a la instancia EC2
+      # Paso 3: Crear el directorio de destino en la instancia EC2 (si no existe)
+      - name: Ensure target directory exists
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} << 'EOF'
+            mkdir -p ${{ secrets.TARGET_DIR }}/ChronoMax
+          EOF
+
+      # Paso 4: Copiar archivos del proyecto a la instancia EC2
       - name: Copy files to EC2
         run: |
           scp -o StrictHostKeyChecking=no -r . ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}/ChronoMax
 
-      # Paso 4: Desplegar en la instancia EC2 utilizando docker-compose
+      # Paso 5: Desplegar en la instancia EC2 utilizando docker-compose
       - name: Deploy application on EC2
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} << 'EOF'
