@@ -190,42 +190,33 @@ def save_time():
 @app.route('/generate_report', methods=['GET'])
 def generate_report():
     print("Generando reporte...")
-    report_date = request.args.get('date')  # Obtener la fecha desde el query string
+    report_date = request.args.get('date')
     if not report_date:
-        print("Fecha no proporcionada")
-        return "Fecha no proporcionada", 400
+        return jsonify({"success": False, "message": "Fecha no proporcionada"}), 400
 
-    # Convertir la fecha al formato adecuado
     try:
         report_date = datetime.strptime(report_date, "%Y-%m-%d").date()
     except ValueError:
-        print("Fecha en formato incorrecto")
-        return "Fecha en formato incorrecto", 400
+        return jsonify({"success": False, "message": "Fecha en formato incorrecto"}), 400
 
-    # Obtener el ID del usuario logueado
     user_id = session.get('user_id')
-    print(f"User ID: {user_id}")  # Verificar que el usuario está logueado
     if not user_id:
-        print("Usuario no autenticado")
-        return "Usuario no autenticado", 403
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 403
 
-    # Obtener el correo del usuario logueado
-    user = UserModel.query.get(user_id)  # Asumiendo que UserModel es el modelo del usuario
+    user = UserModel.query.get(user_id)
     if not user:
-        print("Usuario no encontrado")
-        return "Usuario no encontrado", 404
+        return jsonify({"success": False, "message": "Usuario no encontrado"}), 404
 
-    email = user.Email  # Extraemos el correo del usuario
+    email = user.Email
 
-    # Obtener las actividades del usuario logueado en esa fecha
     activities = CronometroModel.query.filter(
         cast(CronometroModel.ActivityDate, Date) == report_date,
         CronometroModel.UserID == user_id
     ).all()
 
     if not activities:
-        print("No hay actividades para la fecha seleccionada")
-        return jsonify({"success": False, "message": "No hay actividades para la fecha seleccionada"}), 200
+        return jsonify(
+            {"success": False, "message": "No hay actividades registradas en la fecha seleccionada."}), 200
 
     # Crear el PDF en memoria
     buffer = BytesIO()
@@ -282,6 +273,32 @@ def generate_report():
     # Enviar el PDF como respuesta
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"reporte_{report_date}.pdf", mimetype="application/pdf")
+
+# Función para **detener la descarga** si no hay datos en el frontend
+@app.route('/check_report', methods=['GET'])
+def check_report():
+    report_date = request.args.get('date')
+    if not report_date:
+        return jsonify({"success": False, "message": "Fecha no proporcionada"}), 400
+
+    try:
+        report_date = datetime.strptime(report_date, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"success": False, "message": "Fecha en formato incorrecto"}), 400
+
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 403
+
+    activities = CronometroModel.query.filter(
+        cast(CronometroModel.ActivityDate, Date) == report_date,
+        CronometroModel.UserID == user_id
+    ).all()
+
+    if not activities:
+        return jsonify({"success": False, "message": "No hay actividades registradas en la fecha seleccionada."}), 200
+
+    return jsonify({"success": True, "message": "Hay actividades registradas, puedes generar el PDF."}), 200
 
 
 # Flask buscará el archivo 'index.html' en la carpeta 'templates'
