@@ -4,8 +4,8 @@ USE Chronomax;
 GO
 CREATE TABLE Users (
     ID INT IDENTITY(1,1) PRIMARY KEY,
-    Email NVARCHAR(255) NOT NULL UNIQUE,
-    PasswordHash NVARCHAR(255) NOT NULL,
+    Email NVARCHAR(50) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(50) NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE()
 );
 
@@ -17,7 +17,7 @@ GO
 CREATE TABLE Activities (
     ID INT IDENTITY(1,1) PRIMARY KEY, -- Clave primaria �nica para cada actividad
     UserID INT NOT NULL,              -- Relaci�n con la tabla Users
-    ActivityName NVARCHAR(255) NOT NULL, -- Nombre de la actividad
+    ActivityName NVARCHAR(50) NOT NULL, -- Nombre de la actividad
     Duration INT NOT NULL,            -- Duraci�n de la actividad en segundos
     ActivityDate DATETIME DEFAULT GETDATE(), -- Fecha y hora en que se realiz� la actividad
     FOREIGN KEY (UserID) REFERENCES Users(ID) ON DELETE CASCADE -- Relaci�n con Users y eliminaci�n en cascada
