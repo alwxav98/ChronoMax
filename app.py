@@ -47,7 +47,7 @@ def register():
             return jsonify({"success": False, "message": "Por favor, introduce un correo válido."}), 400
 
         # Validar dominios específicos (opcional)
-        allowed_domains = ["gmail.com", "yahoo.com", "outlook.com"]
+        allowed_domains = ["gmail.com", "hotmail.com", "outlook.com"]
         domain = email.split('@')[-1]
         if domain not in allowed_domains:
             return jsonify({"success": False, "message": "El dominio del correo no está permitido. Usa un correo válido."}), 400
